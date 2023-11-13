@@ -1,8 +1,29 @@
 import React from 'react'
 import { View } from "react-native"
 import Carousel, { Pagination } from 'react-native-snap-carousel'
-import CarouselCardItem, { SLIDER_WIDTH, ITEM_WIDTH } from './carouselCardItem'
-import data from './data.js'
+import { SLIDER_WIDTH, ITEM_WIDTH } from './carouselCardItem'
+import Flashcard from './flashcard.js'
+
+var decks2 = [
+  {
+    id: 1,
+    name: 'GYATT Flashcards',
+    flashcards: [
+      { id: 1, frontContent: 'Full name ni allen?', backContent: 'BOGART GYATT MACASPAC' },
+      { id: 2, frontContent: 'huh?', backContent: 'huhtdog kwento mo sa pagong' },
+      
+    ],
+  },
+  {
+    id: 2,
+    name: 'Facts',
+    flashcards: [
+      { id: 1, frontContent: 'shibal', backContent: 'uwu' },
+      { id: 2, frontContent: 'a', backContent: 'b' },
+     
+    ],
+  },
+]
 
 const CarouselCards = () => {
   const [index, setIndex] = React.useState(0)
@@ -11,18 +32,20 @@ const CarouselCards = () => {
   return (
     <View>
       <Carousel
-        layout="tinder"
+        layout="default"
         layoutCardOffset={9}
         ref={isCarousel}
-        data={data}
-        renderItem={CarouselCardItem}
+        data={decks2[0].flashcards}
+        renderItem={({ item }) => (
+          <Flashcard route={{ params: { frontContent: item.frontContent, backContent: item.backContent } }} />
+        )}
         sliderWidth={SLIDER_WIDTH}
         itemWidth={ITEM_WIDTH}
         onSnapToItem={(index) => setIndex(index)}
         useScrollView={true}
       />
       <Pagination
-        dotsLength={data.length}
+        dotsLength={decks2[0].flashcards.length}
         activeDotIndex={index}
         carouselRef={isCarousel}
         dotStyle={{
