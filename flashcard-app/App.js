@@ -14,41 +14,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Carousel, { Pagination } from 'react-native-snap-carousel'
+import { SLIDER_WIDTH, ITEM_WIDTH } from './carouselCardItem'
+import {decks} from './data';
 import Flashcard from './flashcard';
 import CarouselCards from './carouselCards';
 
-
-
-
 const Tab = createBottomTabNavigator();
-
 const Stack = createNativeStackNavigator();
-
-
-
-//decj
-const decks = [
-  {
-    id: 1,
-    name: 'GYATT Flashcards',
-    flashcards: [
-      { id: 1, frontContent: 'Full name ni allen?', backContent: 'BOGART GYATT MACASPAC' },
-      { id: 2, frontContent: 'huh?', backContent: 'huhtdog kwento mo sa pagong' },
-      
-    ],
-  },
-  {
-    id: 2,
-    name: 'Facts',
-    flashcards: [
-      { id: 1, frontContent: 'shibal', backContent: 'uwu' },
-      { id: 2, frontContent: 'a', backContent: 'b' },
-     
-    ],
-  },
-
-];
-
 
 //searchbar
 
@@ -67,6 +40,8 @@ const SearchBar = () => {
 
 function Homepage({ navigation }) {
   const [selectedDeck, setSelectedDeck] = useState(decks[0]);
+  const [index, setIndex] = React.useState(0)
+  const isCarousel = React.useRef(null)
 
   const handleDeckPress = (deck) => {
     setSelectedDeck(deck);
@@ -79,29 +54,54 @@ function Homepage({ navigation }) {
   return (
     <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}> 
     <View style={styles.HomePageUI}>
-   
-      <FlatList
-        data={decks}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleDeckPress(item)}style={styles.deckContainer}>
-            <Text style={styles.deckTitle}>{item.name}</Text>
-          </TouchableOpacity>
-        )}
-      />
-
+      <View>
+        <FlatList
+          data={decks}
+          horizontal
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => handleDeckPress(item)}style={styles.deckContainer}>
+              <Text style={styles.deckTitle}>{item.name}</Text>
+            </TouchableOpacity>
+          )}
+        />
+        <TouchableOpacity style={styles.addButton} onPress={handleButtonPress}>
+          <Text style={styles.addButtonText}>ADD DECK</Text>
+        </TouchableOpacity>
+      </View>
     
       <Text style={styles.deckTitle}>{selectedDeck.name}</Text>
-      <FlatList
+      <Carousel
+        layout="default"
+        layoutCardOffset={9}
+        ref={isCarousel}
         data={selectedDeck.flashcards}
-        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <Flashcard route={{ params: { frontContent: item.frontContent, backContent: item.backContent } }} />
         )}
+        sliderWidth={SLIDER_WIDTH}
+        itemWidth={ITEM_WIDTH}
+        onSnapToItem={(index) => setIndex(index)}
+        useScrollView={true}
+      />
+      <Pagination
+        dotsLength={selectedDeck.flashcards.length}
+        activeDotIndex={index}
+        carouselRef={isCarousel}
+        dotStyle={{
+          width: 10,
+          height: 10,
+          borderRadius: 5,
+          marginHorizontal: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.92)'
+        }}
+        inactiveDotOpacity={0.4}
+        inactiveDotScale={0.6}
+        tappableDots={true}
       />
 
       <TouchableOpacity style={styles.addButton} onPress={handleButtonPress}>
-        <Text style={styles.addButtonText}>ADD DECK</Text>
+        <Text style={styles.addButtonText}>ADD CARD</Text>
       </TouchableOpacity>
     </View>
     </ScrollView> 
@@ -224,7 +224,6 @@ const App=()=> {
     </NavigationContainer>
   );
 }
-
 
 //stylesheet
 const styles = StyleSheet.create({
