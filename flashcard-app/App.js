@@ -238,6 +238,7 @@ function Homepage({ navigation }) {
   );
 }
 
+//prifle 
 function Profile() {
   return (
     <SafeAreaView style={styles.ProfileContainer}>
@@ -263,10 +264,12 @@ function Profile() {
   );
 }
 
+//mi-migrate dito yung sa home
 function Libraries(){
   
 }
 
+//for tabs 
 function Tabs() {
   return (
     <Tab.Navigator
@@ -289,6 +292,7 @@ function Tabs() {
   );
 }
 
+//sign in 
 function SignIn1({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -357,6 +361,7 @@ const App=()=> {
 
 //stylesheet
 const styles = StyleSheet.create({
+  //modal container for deck and flashcard
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
