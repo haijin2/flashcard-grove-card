@@ -8,47 +8,22 @@ import {
   TextInput, 
   TouchableOpacity,
   ScrollView,
-  FlatList  
+  FlatList,
+  Modal,  
 } from "react-native";
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Carousel, { Pagination } from 'react-native-snap-carousel'
+import { SLIDER_WIDTH, ITEM_WIDTH } from './carouselCardItem'
+import {decks} from './data';
 import Flashcard from './flashcard';
 import CarouselCards from './carouselCards';
-
-
-
+import { decks as decksData } from './data';
 
 const Tab = createBottomTabNavigator();
-
 const Stack = createNativeStackNavigator();
-
-
-
-//decj
-const decks = [
-  {
-    id: 1,
-    name: 'GYATT Flashcards',
-    flashcards: [
-      { id: 1, frontContent: 'Full name ni allen?', backContent: 'BOGART GYATT MACASPAC' },
-      { id: 2, frontContent: 'huh?', backContent: 'huhtdog kwento mo sa pagong' },
-      
-    ],
-  },
-  {
-    id: 2,
-    name: 'Facts',
-    flashcards: [
-      { id: 1, frontContent: 'shibal', backContent: 'uwu' },
-      { id: 2, frontContent: 'a', backContent: 'b' },
-     
-    ],
-  },
-
-];
-
 
 //searchbar
 
@@ -66,43 +41,198 @@ const SearchBar = () => {
 };
 
 function Homepage({ navigation }) {
+
+  
+  const [isModalVisibleDeck, setIsModalVisibleDeck] = useState(false);
+  const [isModalVisibleFlashcard, setIsModalVisibleFlashcard] = useState(false);
+  const [newDeckName, setNewDeckName] = useState('');
+  const [decks, setDecks] = useState(decksData); 
+
   const [selectedDeck, setSelectedDeck] = useState(decks[0]);
+  const [index, setIndex] = React.useState(0);
+  const isCarousel = React.useRef(null);
+
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  
+
+  const toggleModalDeck = () => {
+    setIsModalVisibleDeck(!isModalVisibleDeck);
+  };
+  const toggleModalFlashcard = () => {
+    setIsModalVisibleFlashcard(!isModalVisibleFlashcard);
+  };
 
   const handleDeckPress = (deck) => {
     setSelectedDeck(deck);
   };
 
-  const handleButtonPress = () => {
-    navigation.navigate('AnotherScreen');
+  const handleButtonPressDeck = () => {
+    toggleModalDeck();
   };
+  const handleButtonPressFlashcard = () => {
+    toggleModalFlashcard();
+  };
+  const handleCreateDeck = () => {
+    if (!newDeckName) {
+      alert('Please enter a valid deck name');
+      return;
+    }
+
+    const newDeck = {
+      id: decks.length + 1,
+      name: newDeckName,
+      flashcards: [],
+    };
+
+    setDecks([...decks, newDeck]);
+    setNewDeckName('');
+    toggleModalDeck();
+  };
+
+  const handleAddFlashcard = () => {
+    if (!question || !answer) {
+      alert('Please enter both question and answer');
+      return;
+    }
+
+    const newFlashcard = {
+      id: selectedDeck.flashcards.length + 1,
+      frontContent: question,
+      backContent: answer,
+    };
+
+    setSelectedDeck((prevDeck) => ({
+      ...prevDeck,
+      flashcards: [...prevDeck.flashcards, newFlashcard],
+    }));
+    toggleModalFlashcard();
+  };
+  
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}> 
     <View style={styles.HomePageUI}>
-   
-      <FlatList
-        data={decks}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleDeckPress(item)}style={styles.deckContainer}>
-            <Text style={styles.deckTitle}>{item.name}</Text>
-          </TouchableOpacity>
-        )}
-      />
+      <View>
+        <FlatList
+          data={decks}
+          horizontal
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => handleDeckPress(item)}style={styles.deckContainer}>
+              <Text style={styles.deckTitle}>{item.name}</Text>
+            </TouchableOpacity>
+          )}
+        />
+        <TouchableOpacity style={styles.addButton} onPress={handleButtonPressDeck}>
+          <Text style={styles.addButtonText}>ADD DECK</Text>
+        </TouchableOpacity>
+  <Modal
+    animationType="slide"
+    transparent={true}
+    visible={isModalVisibleDeck}
+    onRequestClose={() => {
+      toggleModalDeck();
+    }}
+  >
+    <View style={styles.modalContainer}>
+      <View style={styles.modalContent}>
+        <Text style={styles.modalTitle}>Add Deck</Text>
+        <TextInput
+          style={styles.modalInput}
+          placeholder="Deck Name"
+          value={newDeckName}
+          onChangeText={(text) => setNewDeckName(text)}
+        />
+        <TouchableOpacity
+          style={styles.modalButton}
+          onPress={handleCreateDeck}
+        >
+          <Text style={styles.modalButtonText}>Create Deck</Text>
 
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.modalButton}
+          onPress={toggleModalDeck}
+        >
+          <Text style={styles.modalButtonText}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </Modal>      
+      </View>
     
       <Text style={styles.deckTitle}>{selectedDeck.name}</Text>
-      <FlatList
+      <Carousel
+        layout="default"
+        layoutCardOffset={9}
+        ref={isCarousel}
         data={selectedDeck.flashcards}
-        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <Flashcard route={{ params: { frontContent: item.frontContent, backContent: item.backContent } }} />
         )}
+        sliderWidth={SLIDER_WIDTH}
+        itemWidth={ITEM_WIDTH}
+        onSnapToItem={(index) => setIndex(index)}
+        useScrollView={true}
+      />
+      <Pagination
+        dotsLength={selectedDeck.flashcards.length}
+        activeDotIndex={index}
+        carouselRef={isCarousel}
+        dotStyle={{
+          width: 10,
+          height: 10,
+          borderRadius: 5,
+          marginHorizontal: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.92)'
+        }}
+        inactiveDotOpacity={0.4}
+        inactiveDotScale={0.6}
+        tappableDots={true}
       />
 
-      <TouchableOpacity style={styles.addButton} onPress={handleButtonPress}>
-        <Text style={styles.addButtonText}>ADD DECK</Text>
+      <TouchableOpacity style={styles.addButton} onPress={handleButtonPressFlashcard}>
+        <Text style={styles.addButtonText}>ADD CARD</Text>
       </TouchableOpacity>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisibleFlashcard}
+        onRequestClose={() => {
+          toggleModalFlashcard();
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add Flashcard</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Question"
+              value={question}
+              onChangeText={(text) => setQuestion(text)}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Answer"
+              value={answer}
+              onChangeText={(text) => setAnswer(text)}
+            />
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={handleAddFlashcard}
+            >
+              <Text style={styles.modalButtonText}>Add Flashcard</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={toggleModalFlashcard}
+            >
+              <Text style={styles.modalButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
     </ScrollView> 
   );
@@ -225,12 +355,47 @@ const App=()=> {
   );
 }
 
-
 //stylesheet
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalInput: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingLeft: 10,
+  },
+  modalButton: {
+    backgroundColor: 'green',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontSize: 16,
+  },
   
   // deck container made by chatgpt
   deckContainer: {
+    marginHorizontal: 15,
     marginVertical: 15,
     padding: 20,
     borderWidth: 1,
